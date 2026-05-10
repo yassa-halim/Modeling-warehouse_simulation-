@@ -13,11 +13,11 @@ def render(products, wh_set):
     # ── KPI Cards ────────────────────────────────────────────────────────
     c1, c2, c3, c4, c5 = st.columns(5)
     for col, (v, l) in zip([c1, c2, c3, c4, c5], [
-        (f"{len(products):,}", "Products"),
-        (f"{len(wh_set):,}", "Warehouses"),
-        (f"{total_in:,.0f}", "Total Inbound"),
-        (f"{total_out:,.0f}", "Total Outbound"),
-        (f"{total_adj:,.0f}", "Adjustments"),
+        (f"{len(products):,}", "Total Products"),
+        (f"{len(wh_set):,}", "Active Warehouses"),
+        (f"{total_in:,.0f}", "Units Received"),
+        (f"{total_out:,.0f}", "Units Shipped Out"),
+        (f"{total_adj:,.0f}", "Stock Adjustments"),
     ]):
         col.markdown(
             f'<div class="kcard"><div class="kval">{v}</div>'
@@ -26,7 +26,7 @@ def render(products, wh_set):
         )
 
     # ── ABC Classification ───────────────────────────────────────────────
-    st.markdown('<div class="sh">🏷️ ABC Classification</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sh">🏷️ ABC Product Classification (Pareto Analysis)</div>', unsafe_allow_html=True)
     ca, cb, cc = st.columns(3)
     for col, (cls, color, bg) in zip([ca, cb, cc], [
         ("A", "#34d399", "#064e3b"),
@@ -41,7 +41,7 @@ def render(products, wh_set):
         </div>""", unsafe_allow_html=True)
 
     # ── Pareto Chart ─────────────────────────────────────────────────────
-    st.markdown('<div class="sh">📈 Pareto — Cumulative Outbound Volume</div>',
+    st.markdown('<div class="sh">📈 Pareto Chart — Top Products by Outbound Volume</div>',
                 unsafe_allow_html=True)
     pareto = get_pareto_data(products)
     colors = {"A": "#34d399", "B": "#60a5fa", "C": "#f472b6"}
@@ -68,4 +68,4 @@ def render(products, wh_set):
         legend=dict(orientation="h", y=1.08),
         font=dict(family="Inter"),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")

@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 
 def render(sim, kA, kB, kC):
     # ── Fill Rate Bars ───────────────────────────────────────────────────
-    st.markdown('<div class="sh">Fill Rate — FOQ vs EOQ vs JIT</div>',
+    st.markdown('<div class="sh">Demand Coverage (Fill Rate) by Product — All 3 Policies</div>',
                 unsafe_allow_html=True)
     n20 = [r["item_name"][:18] for r in sim["policy_a"][:20]]
     fig = go.Figure()
@@ -21,27 +21,27 @@ def render(sim, kA, kB, kC):
     fig.update_layout(barmode="group", template="plotly_dark",
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
         height=360, xaxis_tickangle=-40, margin=dict(t=5))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     # ── Cost Breakdown ───────────────────────────────────────────────────
-    st.markdown('<div class="sh">Cost Breakdown</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sh">Cost Breakdown — Storage Cost vs Ordering Cost</div>', unsafe_allow_html=True)
     fig = go.Figure()
     for lbl, k, color in [
         ("FOQ", kA, "#f472b6"), ("EOQ", kB, "#34d399"), ("JIT", kC, "#fbbf24")
     ]:
         fig.add_trace(go.Bar(
-            name=f"{lbl} Holding", x=[lbl],
+            name=f"{lbl} Storage Cost", x=[lbl],
             y=[k["total_holding_cost"]], marker_color=color, opacity=0.9))
         fig.add_trace(go.Bar(
-            name=f"{lbl} Ordering", x=[lbl],
+            name=f"{lbl} Order Cost", x=[lbl],
             y=[k["total_ordering_cost"]], marker_color=color, opacity=0.45))
     fig.update_layout(barmode="stack", template="plotly_dark",
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
         height=360, margin=dict(t=5), yaxis_title="Cost ($)")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     # ── Inventory Over Time ──────────────────────────────────────────────
-    st.markdown('<div class="sh">Inventory Level Over Time (Top Product)</div>',
+    st.markdown('<div class="sh">Daily Stock Level Over Time (Highest-Volume Product)</div>',
                 unsafe_allow_html=True)
     sa, sb, sc = sim["policy_a"][0], sim["policy_b"][0], sim["policy_c"][0]
     fig = go.Figure()
@@ -61,6 +61,6 @@ def render(sim, kA, kB, kC):
             ))
     fig.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)", height=360, margin=dict(t=5),
-        xaxis_title="Day", yaxis_title="Inventory (units)")
-    st.caption(f"Product: **{sa['item_name']}**")
-    st.plotly_chart(fig, use_container_width=True)
+        xaxis_title="Day of Simulation", yaxis_title="Stock on Hand (units)")
+    st.caption(f"Showing product: **{sa['item_name']}**")
+    st.plotly_chart(fig, width="stretch")

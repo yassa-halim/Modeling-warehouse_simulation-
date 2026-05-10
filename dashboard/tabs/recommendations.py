@@ -5,11 +5,11 @@ from analysis.reports import get_reorder_recommendations
 
 
 def render(products, sim):
-    st.markdown('<div class="sh">🔴 Reorder Recommendations</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sh">🚨 Products That Need Reordering (Sorted by Urgency)</div>', unsafe_allow_html=True)
     recs = get_reorder_recommendations(products, sim_results=sim, top_n=30)
-    st.dataframe(recs, use_container_width=True, height=480)
+    st.dataframe(recs, width="stretch", height=480)
 
-    st.markdown('<div class="sh">Net Inventory Position</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sh">Current Stock Levels — Surplus vs Deficit</div>', unsafe_allow_html=True)
     top25 = products[:25]
     nets  = [p["net_qty"] for p in top25]
     fig = go.Figure(go.Bar(
@@ -18,6 +18,6 @@ def render(products, sim):
     ))
     fig.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)", height=340, margin=dict(t=5),
-        xaxis_tickangle=-40, yaxis_title="Net Qty")
-    st.caption("🟢 Surplus | 🔴 Deficit")
-    st.plotly_chart(fig, use_container_width=True)
+        xaxis_tickangle=-40, yaxis_title="Net Stock (units)")
+    st.caption("🟢 Green = Stock surplus (safe) | 🔴 Red = Stock deficit (needs reorder)")
+    st.plotly_chart(fig, width="stretch")

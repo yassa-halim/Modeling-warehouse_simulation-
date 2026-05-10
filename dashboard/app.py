@@ -1,8 +1,7 @@
 """dashboard/app.py — 7-Tab Warehouse Flow Dashboard (Main Layout)"""
 import os
 import sys
-import json
-import hashlib
+import traceback
 
 import streamlit as st
 
@@ -37,33 +36,53 @@ with st.sidebar:
     st.markdown("---")
     st.caption("🔄 Change any slider to re-run simulation")
 
-# ── Cached Data Loading ──────────────────────────────────────────────────
+# ── Data Loading (cached) ────────────────────────────────────────────────
 @st.cache_data(show_spinner="⏳ Loading CSV...")
 def _load(path):
     return classify_abc(load_and_aggregate_from_csv(path))
 
-@st.cache_data(show_spinner="⚙️ Running simulation...")
-def _sim(h, pj, horizon, hc, oc, max_products):
-    return run_simulation_for_products(
-        json.loads(pj), max_products=max_products,
-        horizon=horizon, holding_cost=hc, ordering_cost=oc,
-    )
-
-@st.cache_data(show_spinner="🏭 Running warehouse sim...")
-def _wh_sim(h, pj, horizon, hc, oc):
-    return run_per_warehouse(json.loads(pj), max_products=20,
-                             horizon=horizon, holding_cost=hc, ordering_cost=oc)
+# ── Simulation (stored in session_state) ─────────────────────────────────
+def _get_sim_key():
+    return f"{n_products}_{horizon}_{holding_cost}_{ordering_cost}"
 
 if not os.path.exists(CSV_PATH):
     st.error(f"❌ CSV not found: `{CSV_PATH}`")
     st.stop()
 
-products  = _load(CSV_PATH)
-top       = products[:n_products]
-h_key     = hashlib.sha256(json.dumps([p["product_id"] for p in top]).encode()).hexdigest()
-cache_key = f"{h_key}_{horizon}_{holding_cost}_{ordering_cost}"
-sim       = _sim(cache_key, json.dumps(top), horizon, holding_cost, ordering_cost, n_products)
-wh_rows   = _wh_sim(cache_key, json.dumps(top[:20]), horizon, holding_cost, ordering_cost)
+try:
+    products = _load(CSV_PATH)
+except Exception as e:
+    st.error(f"❌ Error loading CSV: {e}")
+    st.stop()
+
+top = products[:n_products]
+sim_key = _get_sim_key()
+
+# Use session_state to cache simulation results across reruns
+if "sim_key" not in st.session_state or st.session_state.sim_key != sim_key:
+    try:
+        with st.spinner("⚙️ Running simulation..."):
+            sim = run_simulation_for_products(
+                top, max_products=n_products,
+                horizon=horizon, holding_cost=holding_cost,
+                ordering_cost=ordering_cost,
+            )
+        with st.spinner("🏭 Running warehouse sim..."):
+            wh_rows = run_per_warehouse(
+                top[:20], max_products=20,
+                horizon=horizon, holding_cost=holding_cost,
+                ordering_cost=ordering_cost,
+            )
+        st.session_state.sim_key = sim_key
+        st.session_state.sim = sim
+        st.session_state.wh_rows = wh_rows
+    except Exception as e:
+        st.error(f"❌ Simulation error: {e}")
+        st.code(traceback.format_exc())
+        st.stop()
+
+sim     = st.session_state.sim
+wh_rows = st.session_state.wh_rows
 
 kA = compute_aggregate_kpis(sim["policy_a"])
 kB = compute_aggregate_kpis(sim["policy_b"])

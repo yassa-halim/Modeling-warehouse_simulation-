@@ -13,7 +13,7 @@ def render(products):
 
     # ── Movement Type Donut ──────────────────────────────────────────────
     with c1:
-        st.markdown('<div class="sh">Movement Type Breakdown</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sh">Inventory Movement Breakdown</div>', unsafe_allow_html=True)
         fig = go.Figure(go.Pie(
             labels=["Inbound", "Outbound", "Transfer", "Adjustment"],
             values=[total_in, total_out, total_tr, total_adj],
@@ -22,11 +22,11 @@ def render(products):
         ))
         fig.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
                           height=320, margin=dict(t=5), font=dict(family="Inter"))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     # ── Inbound vs Outbound Scatter ──────────────────────────────────────
     with c2:
-        st.markdown('<div class="sh">Inbound vs Outbound (Top 30)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sh">Received vs Shipped — Top 30 Products</div>', unsafe_allow_html=True)
         fig = go.Figure(go.Scatter(
             x=[p["total_inbound_qty"] for p in products[:30]],
             y=[p["total_outbound_qty"] for p in products[:30]],
@@ -36,12 +36,12 @@ def render(products):
         ))
         fig.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)", height=320, margin=dict(t=5),
-            xaxis_title="Inbound", yaxis_title="Outbound",
+            xaxis_title="Units Received (Inbound)", yaxis_title="Units Shipped (Outbound)",
             font=dict(family="Inter"))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     # ── State-Level Activity ─────────────────────────────────────────────
-    st.markdown('<div class="sh">State-Level Activity</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sh">Outbound Activity by State / Region</div>', unsafe_allow_html=True)
     sv = {}
     for p in products:
         s = p.get("primary_warehouse_state", "")
@@ -52,23 +52,23 @@ def render(products):
         marker_color="#6366f1"))
     fig.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)", height=300, margin=dict(t=5),
-        xaxis_title="State", yaxis_title="Outbound Qty")
-    st.plotly_chart(fig, use_container_width=True)
+        xaxis_title="State / Region", yaxis_title="Total Units Shipped")
+    st.plotly_chart(fig, width="stretch")
 
     # ── Full Flow Table ──────────────────────────────────────────────────
-    st.markdown('<div class="sh">Full Flow Table</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sh">Complete Product Flow Details</div>', unsafe_allow_html=True)
     st.dataframe([{
-        "Product": p["product_name"][:30], "SKU": p["sku"],
+        "Product Name": p["product_name"][:30], "SKU": p["sku"],
         "Warehouse": p["primary_warehouse_name"][:22],
         "City": p["primary_warehouse_city"],
         "UOM": p["unit_of_measure"],
-        "Inbound": round(p["total_inbound_qty"], 0),
-        "Outbound": round(p["total_outbound_qty"], 0),
-        "Transfer": round(p["total_transfer_qty"], 0),
-        "Adjustment": round(p["total_adjustment_qty"], 0),
-        "Net": round(p["net_qty"], 0),
+        "Received": round(p["total_inbound_qty"], 0),
+        "Shipped": round(p["total_outbound_qty"], 0),
+        "Transferred": round(p["total_transfer_qty"], 0),
+        "Adjusted": round(p["total_adjustment_qty"], 0),
+        "Net Stock": round(p["net_qty"], 0),
         "Active Days": p["active_days"],
         "ABC": p.get("abc_class", "?"),
         "First Move": p["first_movement_dt"],
         "Last Move": p["last_movement_dt"],
-    } for p in products], use_container_width=True, height=420)
+    } for p in products], width="stretch", height=420)
